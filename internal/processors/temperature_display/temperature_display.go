@@ -72,7 +72,7 @@ func (t *temperatureDisplayProcessor) Name() string {
 }
 
 func (t *temperatureDisplayProcessor) Process(topic string, msg []byte) bool {
-	if !strings.HasPrefix(topic, "zigbee2mqtt/") {
+	if !strings.HasPrefix(topic, "zigbee2mqtt/") || strings.HasPrefix(topic, "zigbee2mqtt/bridge") {
 		return false
 	}
 	sensorName := strings.Split(topic, "/")[1]
