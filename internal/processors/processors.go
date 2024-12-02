@@ -1,5 +1,6 @@
 package processors
 
 type Processor interface {
-	Process(msg []byte) (handled bool)
+	Process(topic string, msg []byte) (handled bool)
+	Name() string
 }

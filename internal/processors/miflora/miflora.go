@@ -65,10 +65,18 @@ type miFloraProcessor struct {
 	moisture    *prometheus.GaugeVec
 }
 
-func (m *miFloraProcessor) Process(msg []byte) (handled bool) {
+func (m *miFloraProcessor) Name() string {
+	return "miflora"
+}
+
+func (m *miFloraProcessor) Process(_ string, msg []byte) (handled bool) {
 	var target miFloraMessage
 	if err := json.Unmarshal(msg, &target); err != nil {
 		m.log.Debug("failed to unmarshal message as miFloraMessage", zap.Error(err), zap.ByteString("raw", msg))
+		return false
+	}
+
+	if target.ID == "" {
 		return false
 	}
 
