@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mqtt-exporter
+  name: mqtt-exporter
+  namespace: home-automation
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqtt-exporter
+  template:
+    metadata:
+      labels:
+        app: mqtt-exporter
+      annotations:
+       prometheus.io/scrape: "true"
+       prometheus.io/port: "8080"
+       config.yaml: |
+        configs:
+          5C:85:7E:B1:12:5C:
+            human_readable_name: some_plant
+    spec:
+      containers:
+      - image: ghcr.io/alvaroaleman/mqtt_exporter:latest
+        name:  mqtt-exporter
+        args:
+        - --server-address=mqtt
+        - --server-port=1883
+        volumeMounts:
+        - mountPath: /config.yaml
+          subPath: config.yaml
+          name: config
+      volumes:
+      - name: config
+        downwardAPI:
+          items:
+          - path: config.yaml
+            fieldRef:
+              fieldPath: metadata.annotations['config.yaml']
