@@ -42,6 +42,7 @@ func Run(opts Opts, log *zap.Logger) error {
 		if err := yaml.Unmarshal(content, &config); err != nil {
 			return fmt.Errorf("failed to unmarshal config file: %w", err)
 		}
+		log.Info("Loaded configuration from file", zap.String("file", opts.ConfigFile))
 	}
 
 	gatherers := prometheus.Gatherers{prometheus.DefaultGatherer}
@@ -74,13 +75,13 @@ func Run(opts Opts, log *zap.Logger) error {
 		SetDefaultPublishHandler(func(c mqtt.Client, m mqtt.Message) {
 			for _, processor := range processors {
 				if processor.Process(m.Topic(), m.Payload()) {
-					log.Debug("Processed message", zap.String("processor", processor.Name()))
+					log.Info("Processed message", zap.String("processor", processor.Name()))
 					break
 				}
 			}
 			log.Debug("Received message",
 				zap.String("topic", m.Topic()),
-			//	zap.ByteString("payload", m.Payload()),
+				zap.ByteString("payload", m.Payload()),
 			)
 		})
 
