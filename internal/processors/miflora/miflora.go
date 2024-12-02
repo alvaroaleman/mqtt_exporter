@@ -11,7 +11,7 @@ import (
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors"
 )
 
-func New(log *zap.Logger, registry prometheus.Registerer) (processors.Processor, error) {
+func New(log *zap.Logger, config config.Config, registry prometheus.Registerer) (processors.Processor, error) {
 	temperature := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:        "temperature_celsius",
 		Help:        "Temperature in Celsius",
@@ -46,6 +46,7 @@ func New(log *zap.Logger, registry prometheus.Registerer) (processors.Processor,
 	}
 	return &miFloraProcessor{
 		log:         log,
+		config:      config,
 		state:       make(map[string]*miFloraState),
 		temperature: temperature,
 		fertility:   fertility,

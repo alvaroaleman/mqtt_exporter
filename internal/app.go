@@ -5,21 +5,25 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/alvaroaleman/mqtt_exporter/internal/config"
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors"
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors/miflora"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
+	"sigs.k8s.io/yaml"
 )
 
 type Opts struct {
 	ServerAddress string
 	ServerPort    int
 	Topics        []string
+	ConfigFile    string
 }
 
 func Run(opts Opts, log *zap.Logger) error {
@@ -28,8 +32,19 @@ func Run(opts Opts, log *zap.Logger) error {
 		syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
+	var config config.Config
+	if opts.ConfigFile != "" {
+		content, err := os.ReadFile(opts.ConfigFile)
+		if err != nil {
+			return fmt.Errorf("failed to read config file %s: %w", opts.ConfigFile, err)
+		}
+		if err := yaml.Unmarshal(content, &config); err != nil {
+			return fmt.Errorf("failed to unmarshal config file: %w", err)
+		}
+	}
+
 	var processors []processors.Processor
-	miflora, err := miflora.New(log, prometheus.DefaultRegisterer)
+	miflora, err := miflora.New(log, config, prometheus.DefaultRegisterer)
 	if err != nil {
 		return fmt.Errorf("failed to construct miflora processor: %w", err)
 	}

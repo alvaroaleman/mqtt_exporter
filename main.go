@@ -19,6 +19,7 @@ func main() {
 	cmd.Flags().IntVar(&o.ServerPort, "server-port", 1883, "MQTT server port")
 	cmd.Flags().StringVar(&logLevel, "log-level", "info", "Log level (debug, info, warn, error)")
 	cmd.Flags().StringSliceVar(&o.Topics, "topic", []string{"#"}, "MQTT topics to subscribe to, '#' for all opics")
+	cmd.Flags().StringVar(&o.ConfigFile, "config-file", "", "Path to configuration file")
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		log, err := setupLogger(logLevel)
 		if err != nil {
