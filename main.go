@@ -28,7 +28,7 @@ func main() {
 		return internal.Run(o, log)
 	}
 	if err := cmd.Execute(); err != nil {
-		fmt.Sprintf("error executing command: %v", err)
+		fmt.Printf("error executing command: %v", err)
 		os.Exit(1)
 	}
 }

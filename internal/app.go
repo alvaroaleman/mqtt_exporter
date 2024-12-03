@@ -9,10 +9,11 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/alvaroaleman/mqtt_exporter/internal/collector"
 	"github.com/alvaroaleman/mqtt_exporter/internal/config"
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors"
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors/miflora"
-	temperaturedisplay "github.com/alvaroaleman/mqtt_exporter/internal/processors/temperature_display"
+	"github.com/alvaroaleman/mqtt_exporter/internal/processors/zigbee2mqtt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -45,22 +46,18 @@ func Run(opts Opts, log *zap.Logger) error {
 		log.Info("Loaded configuration from file", zap.String("file", opts.ConfigFile))
 	}
 
-	gatherers := prometheus.Gatherers{prometheus.DefaultGatherer}
+	collector := collector.New()
+	if err := prometheus.Register(collector); err != nil {
+		return fmt.Errorf("failed to register collector: %w", err)
+	}
 
-	var processors []processors.Processor
-	miflora, err := miflora.New(log, config, prometheus.DefaultRegisterer)
+	miflora, err := miflora.New(log, config, collector)
 	if err != nil {
 		return fmt.Errorf("failed to construct miflora processor: %w", err)
 	}
-	processors = append(processors, miflora)
+	processors := []processors.Processor{miflora}
 
-	temperaturedisplayRegistry := prometheus.NewRegistry()
-	temperatureDisplayProcessor, err := temperaturedisplay.New(log, config, temperaturedisplayRegistry)
-	if err != nil {
-		return fmt.Errorf("failed to construct temperature display processor: %w", err)
-	}
-	gatherers = append(gatherers, temperaturedisplayRegistry)
-	processors = append(processors, temperatureDisplayProcessor)
+	processors = append(processors, zigbee2mqtt.New(log, collector))
 
 	mqttOps := mqtt.
 		NewClientOptions().
@@ -97,10 +94,7 @@ func Run(opts Opts, log *zap.Logger) error {
 	}
 	log.Info("Successfully subscribed to all topics")
 
-	http.Handle("/metrics", promhttp.InstrumentMetricHandler(
-		prometheus.DefaultRegisterer,
-		promhttp.HandlerFor(gatherers, promhttp.HandlerOpts{}),
-	))
+	http.Handle("/metrics", promhttp.Handler())
 
 	server := &http.Server{Addr: ":8080", Handler: http.DefaultServeMux}
 	go func() {
