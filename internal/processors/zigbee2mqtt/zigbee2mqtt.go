@@ -36,9 +36,11 @@ func (t *temperatureDisplayProcessor) Process(topic string, msg []byte) bool {
 		t.log.Error("failed to unmarshal message", zap.Error(err))
 		return true
 	}
+
 	if m.Battery != nil {
 		t.collector.SetBattery("sensor", sensorName, *m.Battery)
 	}
+
 	if m.Humidity != nil {
 		t.collector.SetHumidity("sensor", sensorName, *m.Humidity)
 	}
@@ -50,6 +52,10 @@ func (t *temperatureDisplayProcessor) Process(topic string, msg []byte) bool {
 	if m.Linkquality != nil {
 		t.collector.SetLinkQuality("sensor", sensorName, *m.Linkquality)
 
+	}
+
+	if m.Temperature != nil {
+		t.collector.SetTemperature("sensor", sensorName, *m.Temperature)
 	}
 
 	t.log.Debug("Processed message", zap.String("topic", topic), zap.Any("message", m))
