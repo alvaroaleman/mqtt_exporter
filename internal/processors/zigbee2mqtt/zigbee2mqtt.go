@@ -45,10 +45,6 @@ func (t *temperatureDisplayProcessor) Process(topic string, msg []byte) bool {
 		t.collector.SetHumidity("sensor", sensorName, *m.Humidity)
 	}
 
-	if m.Battery != nil {
-		t.collector.SetBattery("sensor", sensorName, *m.Battery)
-	}
-
 	if m.Linkquality != nil {
 		t.collector.SetLinkQuality("sensor", sensorName, *m.Linkquality)
 
