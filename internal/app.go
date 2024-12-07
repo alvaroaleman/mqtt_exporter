@@ -12,6 +12,7 @@ import (
 	"github.com/alvaroaleman/mqtt_exporter/internal/collector"
 	"github.com/alvaroaleman/mqtt_exporter/internal/config"
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors"
+	"github.com/alvaroaleman/mqtt_exporter/internal/processors/esphome"
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors/miflora"
 	"github.com/alvaroaleman/mqtt_exporter/internal/processors/zigbee2mqtt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -51,13 +52,16 @@ func Run(opts Opts, log *zap.Logger) error {
 		return fmt.Errorf("failed to register collector: %w", err)
 	}
 
+	processors := []processors.Processor{
+		zigbee2mqtt.New(log, collector),
+		esphome.New(log, collector),
+	}
+
 	miflora, err := miflora.New(log, config, collector)
 	if err != nil {
 		return fmt.Errorf("failed to construct miflora processor: %w", err)
 	}
-	processors := []processors.Processor{miflora}
-
-	processors = append(processors, zigbee2mqtt.New(log, collector))
+	processors = append(processors, miflora)
 
 	mqttOps := mqtt.
 		NewClientOptions().
